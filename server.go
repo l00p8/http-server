@@ -1,4 +1,4 @@
-package http_server
+package xserver
 
 import (
 	"context"
@@ -11,8 +11,8 @@ import (
 	"go.uber.org/zap"
 
 	"github.com/go-chi/valve"
+	logger "github.com/l00p8/log"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
-	logger"github.com/l00p8/log"
 )
 
 // Config describes server configuration

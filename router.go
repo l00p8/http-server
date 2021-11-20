@@ -1,4 +1,4 @@
-package http_server
+package xserver
 
 import (
 	"net/http"
@@ -34,7 +34,6 @@ type Router interface {
 type router struct {
 	mux    chi.Router
 	Config Config
-	mw     OutputMiddleware
 }
 
 func (r *router) Healthers(healthers ...Healther) {

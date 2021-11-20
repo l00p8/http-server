@@ -1,4 +1,4 @@
-package http_server
+package xserver
 
 type HttpMiddlewareFactory struct {
 }

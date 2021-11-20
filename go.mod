@@ -1,4 +1,4 @@
-module github.com/l00p8/http-server
+module github.com/l00p8/xserver
 
 go 1.16
 
@@ -7,7 +7,6 @@ require (
 	github.com/go-chi/chi v1.5.4
 	github.com/go-chi/valve v0.0.0-20170920024740-9e45288364f4
 	github.com/l00p8/log v0.0.0-20211112103222-a8d61f7b279a
-	github.com/l00p8/utils v0.0.0-20211112103002-eca4d2e7f4b7
 	github.com/patrickmn/go-cache v2.1.0+incompatible // indirect
 	github.com/prometheus/client_golang v1.11.0
 	go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.26.1

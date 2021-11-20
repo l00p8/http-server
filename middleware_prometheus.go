@@ -1,4 +1,4 @@
-package http_server
+package xserver
 
 import (
 	"github.com/prometheus/client_golang/prometheus"
