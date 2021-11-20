@@ -23,7 +23,10 @@ type Config struct {
 	HealthUri       string        `envconfig:"health_uri" mapstructure:"health_uri" default:"/_health"`
 	ApiVersion      string        `envconfig:"api_version" mapstructure:"api_version" default:"v1"`
 	Timeout         time.Duration `envconfig:"timeout" mapstructure:"timeout" default:"20"`
-	RateLimit       int64         `envconfig:"rate_limit" mapstructure:"rate_limit" default:"1"` // TODO: change in future :)
+	RateLimit       int64         `envconfig:"rate_limit" mapstructure:"rate_limit" default:"1000"`
+	CertPath        string        `envconfig:"cert_path" mapstructure:"cert_path" default:""`
+	KeyPath         string        `envconfig:"key_path" mapstructure:"key_path" default:""`
+	TLSEnabled      bool          `envconfig:"tls_enabled" mapstructure:"tls_enabled" default:""`
 	Logger          logger.Logger
 }
 
@@ -81,9 +84,16 @@ func Listen(cfg Config, router Muxer, cleanUp func()) error {
 
 	log.Info("Starting a new server on address: ", zap.String("addr", cfg.Addr))
 
-	if err := srv.ListenAndServe(); err != http.ErrServerClosed {
-		log.Error("A server listener error: ", zap.String("error", err.Error()))
-		return err
+	if !cfg.TLSEnabled {
+		if err := srv.ListenAndServe(); err != http.ErrServerClosed {
+			log.Error("A server listener error: ", zap.String("error", err.Error()))
+			return err
+		}
+	} else {
+		if err := srv.ListenAndServeTLS(cfg.CertPath, cfg.KeyPath); err != http.ErrServerClosed {
+			log.Error("A tls server listener error: ", zap.String("error", err.Error()))
+			return err
+		}
 	}
 	log.Info("Server is down")
 	return nil
