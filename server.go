@@ -8,8 +8,6 @@ import (
 	"syscall"
 	"time"
 
-	"go.uber.org/zap"
-
 	"github.com/go-chi/valve"
 	logger "github.com/l00p8/log"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
@@ -44,54 +42,58 @@ func Listen(cfg Config, router Muxer, cleanUp func()) error {
 	router.Mux().Handle("/_metrics", promhttp.Handler())
 
 	c := make(chan os.Signal, 1)
-	signal.Notify(c, os.Interrupt, syscall.SIGTERM)
+	signal.Notify(c, os.Interrupt, syscall.SIGTERM, os.Interrupt)
 
 	go func() {
-		for range c {
-			// sig is a ^C, handle it
-			log.Info("Shutting down a http server...\n")
+		<-c
+		//for range c {
+		// sig is a ^C, handle it
+		log.Info("Shutting down a http server...")
 
-			shutdown := cfg.ShutdownTimeout
+		shutdown := cfg.ShutdownTimeout
 
-			// first valv
-			if err := valv.Shutdown(shutdown); err != nil {
-				log.Error("Error shutting down a Valve: ", zap.String("error", err.Error()))
-				return
-			}
-
-			// create a context with timeout
-			ctx, cancel := context.WithTimeout(context.Background(), shutdown)
-			defer cancel()
-
-			// start http server shutdown
-			if err := srv.Shutdown(ctx); err != nil {
-				log.Error("Error shutting down a http server: ", zap.String("error", err.Error()))
-				return
-			}
-
-			// cleanUp before shutDown
-			cleanUp()
-
-			// verify, in worst case call cancel via defer
-			select {
-			case <-time.After(cfg.GracefulTimeout):
-				log.Info("Not all connections are done")
-			case <-ctx.Done():
-
-			}
+		// first valv
+		if err := valv.Shutdown(shutdown); err != nil {
+			log.Error("Error shutting down a Valve: " + err.Error())
+			return
 		}
+
+		// create a context with timeout
+		ctx, cancel := context.WithTimeout(context.Background(), shutdown)
+		defer func() {
+			signal.Stop(c)
+			cancel()
+		}()
+
+		// start http server shutdown
+		if err := srv.Shutdown(ctx); err != nil {
+			log.Error("Error shutting down a http server: " + err.Error())
+			return
+		}
+
+		// cleanUp before shutDown
+		cleanUp()
+
+		// verify, in worst case call cancel via defer
+		select {
+		case <-time.After(cfg.GracefulTimeout):
+			log.Info("Not all connections are done")
+		case <-ctx.Done():
+
+		}
+		//}
 	}()
 
-	log.Info("Starting a new server on address: ", zap.String("addr", cfg.Addr))
+	log.Info("Starting a new server on address: " + cfg.Addr)
 
 	if !cfg.TLSEnabled {
 		if err := srv.ListenAndServe(); err != http.ErrServerClosed {
-			log.Error("A server listener error: ", zap.String("error", err.Error()))
+			log.Error("A server listener error: " + err.Error())
 			return err
 		}
 	} else {
 		if err := srv.ListenAndServeTLS(cfg.CertPath, cfg.KeyPath); err != http.ErrServerClosed {
-			log.Error("A tls server listener error: ", zap.String("error", err.Error()))
+			log.Error("A tls server listener error: " + err.Error())
 			return err
 		}
 	}

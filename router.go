@@ -77,14 +77,15 @@ func NewRouter(cfg Config) Router {
 		timeout = 5 * time.Second
 	}
 
-	//r.Mux.Use(WithLogging(cfg.Logger.Logger.Desugar()))
-	r.mux.Use(chiMiddleware.Logger)
+	//r.mux.Use(chiMiddleware.Logger)
 	r.mux.Use(chiMiddleware.RequestID)
 	r.mux.Use(chiMiddleware.StripSlashes)
 	r.mux.Use(chiMiddleware.Recoverer)
 	r.mux.Use(chiMiddleware.Timeout(timeout))
 	r.mux.Use(prometheusMiddleware)
 	r.mux.Use(rateLimitter(lmt))
+	r.mux.Use(WithLogging(cfg.Logger))
+	r.mux.Use(xRequestID)
 
 	return r
 }
