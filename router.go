@@ -4,7 +4,6 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/didip/tollbooth"
 	"github.com/go-chi/chi"
 	chiMiddleware "github.com/go-chi/chi/middleware"
 )
@@ -70,7 +69,7 @@ func (r *router) Mux() chi.Router {
 
 func NewRouter(cfg Config) Router {
 	r := &router{mux: chi.NewRouter(), Config: cfg}
-	lmt := tollbooth.NewLimiter(float64(cfg.RateLimit), nil)
+	//lmt := tollbooth.NewLimiter(float64(cfg.RateLimit), nil)
 
 	timeout := r.Config.Timeout
 	if timeout == 0 {
@@ -81,11 +80,12 @@ func NewRouter(cfg Config) Router {
 	r.mux.Use(chiMiddleware.RequestID)
 	r.mux.Use(chiMiddleware.StripSlashes)
 	r.mux.Use(chiMiddleware.Recoverer)
+	r.mux.Use(chiMiddleware.Throttle(int(cfg.RateLimit)))
 	r.mux.Use(chiMiddleware.Timeout(timeout))
 	r.mux.Use(prometheusMiddleware)
-	r.mux.Use(rateLimitter(lmt))
-	r.mux.Use(WithLogging(cfg.Logger))
+	//r.mux.Use(rateLimitter(lmt))
 	r.mux.Use(xRequestID)
+	r.mux.Use(WithLogging(cfg.Logger))
 
 	return r
 }

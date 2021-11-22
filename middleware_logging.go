@@ -14,6 +14,7 @@ func WithLogging(log log.Logger) func(http.Handler) http.Handler {
 		fn := func(w http.ResponseWriter, r *http.Request) {
 			t1 := time.Now()
 			rec := httptest.NewRecorder()
+			log.Debug(r.Method + " " + r.URL.String() + " " + r.Header.Get("X-Request-Id"))
 			next.ServeHTTP(rec, r)
 
 			dumpResp, _ := httputil.DumpResponse(rec.Result(), true)

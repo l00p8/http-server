@@ -34,12 +34,14 @@ func Listen(cfg Config, router Muxer, cleanUp func()) error {
 	valv := valve.New()
 	log := cfg.Logger
 
-	srv := http.Server{
-		Addr:    cfg.Addr,
-		Handler: router.Mux(),
-	}
-
 	router.Mux().Handle("/_metrics", promhttp.Handler())
+
+	srv := http.Server{
+		Addr:         cfg.Addr,
+		Handler:      router.Mux(),
+		ReadTimeout:  2 * cfg.Timeout,
+		WriteTimeout: 2 * cfg.Timeout,
+	}
 
 	c := make(chan os.Signal, 1)
 	signal.Notify(c, os.Interrupt, syscall.SIGTERM, os.Interrupt)
@@ -65,14 +67,14 @@ func Listen(cfg Config, router Muxer, cleanUp func()) error {
 			cancel()
 		}()
 
+		// cleanUp before shutDown
+		cleanUp()
+
 		// start http server shutdown
 		if err := srv.Shutdown(ctx); err != nil {
 			log.Error("Error shutting down a http server: " + err.Error())
 			return
 		}
-
-		// cleanUp before shutDown
-		cleanUp()
 
 		// verify, in worst case call cancel via defer
 		select {
